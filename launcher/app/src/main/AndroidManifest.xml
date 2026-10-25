@@ -108,5 +108,10 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/input_key_service" />
         </service>
+    <provider
+    android:name=".PrayerTimes"
+    android:authorities="com.gathin.tvhome.prayertimes"
+    android:exported="false" />
+    <uses-permission android:name="android.permission.INTERNET" />
     </application>
 </manifest>

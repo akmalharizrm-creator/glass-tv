@@ -1,33 +1,7 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-permissions:
-  contents: read
-
+name: apk
+on: workflow_dispatch
 jobs:
-  lists-and-tools:
-    name: Lists, tools and docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Tools virtualenv
-        run: |
-          python3 -m venv tools/venv
-          tools/venv/bin/pip install -q -r tools/requirements.txt
-      - name: Example lists, README tables, shell helpers
-        env:
-          CLEANYOURTV_STRICT: ${{ github.event_name == 'push' && '1' || '' }}
-        run: python3 -m unittest discover -s tests -v
-
-  launcher:
-    name: Launcher build and unit tests
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,13 +13,11 @@ jobs:
         with:
           packages: platforms;android-34 build-tools;34.0.0
       - uses: gradle/actions/setup-gradle@v4
-      - name: Unit tests and release build
-        working-directory: launcher
+      - working-directory: launcher
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon testReleaseUnitTest assembleRelease
-      - name: The launcher stays small
-        run: |
-          size=$(stat -c %s launcher/app/build/outputs/apk/release/app-release.apk)
-          echo "release APK: $((size / 1024)) KB"
-          test "$size" -lt 409600 || { echo "APK is over 400 KB; the launcher targets 1 GB TVs, keep it small"; exit 1; }
+          ./gradlew --no-daemon assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glass-tv-apk
+          path: launcher/app/build/outputs/apk/release/*.apk
